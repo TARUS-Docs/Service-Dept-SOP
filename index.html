@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarus Products - Service SOP Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Image Callout Styles */
+        .callout-dot {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            border: 2px solid white;
+            position: absolute;
+            z-index: 10;
+        }
+        .callout-ping {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            position: absolute;
+            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .callout-label {
+            position: absolute;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            color: #1e293b;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+            z-index: 20;
+            pointer-events: none; /* Prevent text cursor when in edit mode */
+        }
+
+        /* Edit Mode Styles */
+        .is-editing .editable {
+            outline: 2px dashed #3b82f6; /* Tailwind blue-500 */
+            outline-offset: 2px;
+            border-radius: 4px;
+            background-color: rgba(239, 246, 255, 0.5); /* Tailwind blue-50 */
+            cursor: text;
+            min-height: 1.5em;
+            transition: all 0.2s ease;
+        }
+        .is-editing .editable:hover {
+            background-color: rgba(219, 234, 254, 0.5); /* Tailwind blue-100 */
+        }
+        .is-editing .editable:focus {
+            outline: 2px solid #2563eb; /* Tailwind blue-600 */
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased overflow-hidden">
+
+    <div class="flex h-screen w-full">
+        
+        <!-- Mobile Sidebar Backdrop -->
+        <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-900/60 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-slate-900 text-slate-300 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:flex-shrink-0 transition-transform duration-300 ease-in-out flex flex-col shadow-xl">
+            <!-- Sidebar Header -->
+            <div class="h-16 flex items-center justify-between px-6 bg-slate-950 border-b border-slate-800">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold tracking-tight text-blue-400">TARUS <span class="text-white">PRODUCTS</span></h1>
+                </div>
+                <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Sidebar Links -->
+            <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <div class="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Troubleshooting SOPs</div>
+                
+                <!-- Active Link -->
+                <a href="#" class="flex items-center px-3 py-2.5 bg-blue-600 text-white rounded-lg group">
+                    <svg class="w-5 h-5 mr-3 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                    <span class="font-medium text-sm">Network Communications</span>
+                </a>
+
+                <!-- Placeholders -->
+                <a href="#" class="flex items-center px-3 py-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span class="font-medium text-sm">Mechanical Diagnostics</span>
+                </a>
+
+                <a href="#" class="flex items-center px-3 py-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <span class="font-medium text-sm">Electrical Systems</span>
+                </a>
+
+                <a href="#" class="flex items-center px-3 py-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                    <span class="font-medium text-sm">Drive Tuning & Calibration</span>
+                </a>
+
+                <a href="#" class="flex items-center px-3 py-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-slate-500 group-hover:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span class="font-medium text-sm">Software & Updates</span>
+                </a>
+            </div>
+
+            <!-- User/Profile bottom section -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-300">
+                        SD
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-slate-200">Service Dept</p>
+                        <p class="text-xs text-slate-500">Standard Operating Procedures</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50">
+            
+            <!-- Top Header (Sticky) -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30 shrink-0 shadow-sm">
+                <div class="flex items-center">
+                    <button onclick="toggleSidebar()" class="lg:hidden mr-4 text-slate-500 hover:text-slate-700 focus:outline-none p-1 rounded-md hover:bg-slate-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <h2 class="text-lg font-semibold text-slate-800">Foundational Troubleshooting: CNC Communication</h2>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button id="editToggleBtn" onclick="toggleEditMode()" class="flex items-center px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-md border border-slate-300 transition-colors shadow-sm">
+                        <svg id="editIcon" class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <span id="editText">Enable Edit Mode</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable SOP Content -->
+            <div id="sopContentArea" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full pb-32">
+                <div class="max-w-5xl mx-auto space-y-10">
+                    
+                    <!-- Intro & Toolkit Section -->
+                    <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-lg font-semibold text-blue-700 mb-2">Objective</h3>
+                                <div class="editable text-slate-600 leading-relaxed mb-6 text-sm sm:text-base">
+                                    This document establishes the mandatory foundational checks that all Service Technicians and Managers must perform before escalating communication issues to the Applications Manager or Startup Manager.
+                                </div>
+                                
+                                <h3 class="text-lg font-semibold text-blue-700 mb-2">Background</h3>
+                                <div class="editable text-slate-600 leading-relaxed text-sm sm:text-base">
+                                    Escalations must only occur after basic physical and network layer troubleshooting has been exhausted. Recently, significant downtime has occurred due to a failure to verify basic physical connections (e.g., internal cable routing failures that could be bypassed immediately with an external cable).
+                                </div>
+                            </div>
+                            
+                            <div class="bg-slate-50 p-6 rounded-lg border border-slate-200 h-full">
+                                <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 01-1-1V4a1 1 0 011-1h3a1 1 0 001-1v-1z"></path></svg>
+                                    Required Technician Toolkit
+                                </h3>
+                                <ul class="space-y-3 text-sm text-slate-700 mb-6">
+                                    <li class="flex items-start">
+                                        <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                        <span class="editable"><strong>Network Cable Tester Kit</strong> (to verify continuity and pinouts on both ends of a cable).</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                        <span class="editable"><strong>100ft Standard Ethernet Cable</strong> (Cat5e/Cat6).</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                        <span class="editable"><strong>100ft Crossover Ethernet Cable</strong> (Specifically for older SPUD controllers. Note: Crossover requires pins 1 & 2 to cross with 3 & 6 / Green and Orange pairs swapped).</span>
+                                    </li>
+                                </ul>
+                                <img src="Tester.jpg" alt="Network Cable Tester" class="w-full max-w-[180px] h-auto mx-auto rounded shadow border border-slate-200" onerror="this.src='https://placehold.co/300x400/e2e8f0/475569?text=Tester+Kit'">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Phase 1 -->
+                    <section>
+                        <div class="bg-amber-50 border-l-4 border-amber-500 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-amber-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 shrink-0">1</div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-amber-900">Phase 1: The Universal Baseline Check (All Controllers)</h2>
+                            </div>
+                            <div class="editable text-amber-800 mb-6 font-medium text-sm sm:text-base">
+                                Regardless of the controller generation (SPUD, Aldebaran, or TarsNC), the absolute fastest way to isolate a communication failure is to bypass the machine's internal routing.
+                            </div>
+                            
+                            <div class="bg-white p-5 sm:p-6 rounded border border-amber-200 shadow-inner">
+                                <h3 class="text-sm font-bold text-red-600 mb-4 uppercase tracking-wide">Before escalating, perform the External Cable Bypass:</h3>
+                                <ul class="text-slate-700 space-y-4 text-sm sm:text-base list-disc pl-5">
+                                    <li class="editable">Connect your proven 100ft external network cable directly from the network port on the desktop PC (configured for machine control) to the machine control port.</li>
+                                    <li class="editable">If communication is restored, the issue is an internal cable failure. You can now work backward to find the physical break, bad connector, or replace the internal run.</li>
+                                    <li class="editable">If communication still fails, proceed to the specific controller troubleshooting steps below.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Phase 2 Header & Table -->
+                    <section>
+                        <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                            <span class="bg-slate-800 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 shrink-0 text-base">2</span>
+                            Phase 2: Controller-Specific Protocols
+                        </h2>
+                        
+                        <div class="overflow-x-auto rounded-lg shadow-sm border border-slate-200 mb-8 bg-white">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-700 text-sm">
+                                        <th class="py-3 px-4 border-b font-semibold w-1/4">Generation</th>
+                                        <th class="py-3 px-4 border-b font-semibold w-1/4">Proxy Service</th>
+                                        <th class="py-3 px-4 border-b font-semibold w-1/2">Notes / Technology</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm text-slate-700">
+                                    <tr class="hover:bg-slate-50 transition border-b">
+                                        <td class="py-3 px-4 font-medium text-slate-900 editable">SPUD ('70s / '80s)</td>
+                                        <td class="py-3 px-4 font-mono text-xs editable">PC-Mill</td>
+                                        <td class="py-3 px-4 editable"><strong>Requires a Crossover Cable.</strong> Standard patch cables will not work.</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition border-b">
+                                        <td class="py-3 px-4 font-medium text-slate-900 editable">Aldebaran (2000s)</td>
+                                        <td class="py-3 px-4 font-mono text-xs editable">Mill-Proxy / Q-Proxy</td>
+                                        <td class="py-3 px-4 editable">Q-Proxy utilized for digital proxy configurations.</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="py-3 px-4 font-medium text-slate-900 editable">TarsNC (Current)</td>
+                                        <td class="py-3 px-4 font-mono text-xs editable">S-Proxy</td>
+                                        <td class="py-3 px-4 editable">Communicates with Siemens Sinumerik 1 overlaid with Tarus software.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- SPUD Section -->
+                        <div class="space-y-8">
+                            <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-blue-600">
+                                <h3 class="text-xl font-bold text-slate-900 mb-2">SPUD Controller (PC-Mill) Troubleshooting</h3>
+                                <p class="text-sm text-slate-500 mb-6 pb-4 border-b">Follow these steps in exact order when responding to a SPUD communication error.</p>
+                                
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                                    <div class="order-2 lg:order-1">
+                                        <div class="bg-slate-50 p-4 rounded border border-slate-200 mb-4">
+                                            <p class="editable text-sm text-slate-700"><strong>Crucial Network Note:</strong> SPUD controllers require a crossover cable. A crossover requires pins 1 & 2 to cross with 3 & 6 (Green and Orange pairs swapped).</p>
+                                        </div>
+                                        <img src="cross-connect.jpg" alt="T568A and T568B Pinouts" class="w-full rounded shadow border border-slate-200" onerror="this.src='https://placehold.co/600x400/e2e8f0/475569?text=Crossover+Pinout+Diagram'">
+                                    </div>
+                                    
+                                    <div class="space-y-4 order-1 lg:order-2">
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                            <div>
+                                                <h4 class="font-semibold text-slate-800 text-sm">Power Down and Reseat</h4>
+                                                <div class="editable text-sm text-slate-600 mt-1">Power down the machine entirely. Reseat the network cable at the computer network port and at the machine control port. Ensure you are grounded, then remove and carefully re-seat the Flash card into the Mill PC (CPU board).</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                            <div>
+                                                <h4 class="font-semibold text-slate-800 text-sm">Verify Static IPv4 Settings</h4>
+                                                <div class="editable text-sm text-slate-600 mt-1">Before testing communication, verify the Windows PC's Network Adapter is still holding its assigned Static IP address. If the PC has defaulted to a DHCP/APIPA address (169.254.x.x), communication will fail regardless of the cable.</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                            <div>
+                                                <h4 class="font-semibold text-slate-800 text-sm">Power Up and Ping Test</h4>
+                                                <div class="editable text-sm text-slate-600 mt-1">Turn the machine on. Open Command Prompt and attempt to ping the machine's communication IP address: <code class="bg-slate-200 px-1 rounded text-red-600">ping 192.0.0.47</code>. If successful, communication is restored. If it fails, proceed.</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                            <div>
+                                                <h4 class="font-semibold text-slate-800 text-sm">Verify Windows HOSTS File (Admin)</h4>
+                                                <div class="editable text-sm text-slate-600 mt-1">Navigate to <code class="text-xs bg-slate-200 px-1">C:\Windows\System32\drivers\etc</code>. Open Notepad as Admin, then open `hosts`. Verify the exact line: <code class="font-bold">192.0.0.46 PC MILL</code>. <em>(Note: .46 is the proxy IP, intentionally differing from the .47 machine IP)</em>. Correct if missing or has a # in front.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                    <h4 class="font-semibold text-slate-800 mb-2 flex items-center">
+                                        <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-2 shrink-0 text-xs">5</div>
+                                        CPU Board Environmental & Hardware Check
+                                    </h4>
+                                    <div class="editable text-sm text-slate-700 mb-6">Unplug the flash card and re-seat it into the CPU board one more time, then test. If it still fails, inspect the cooling fan on the CPU board. In hot manufacturing environments (especially shops without AC), these fans fail, causing the board to overheat and drop communication.</div>
+                                    
+                                    <div class="flex flex-col items-center mb-6">
+                                        <!-- Image Container with relative positioning for callouts -->
+                                        <div class="relative inline-block w-full max-w-2xl bg-white rounded-lg p-2 border border-slate-200 shadow-sm">
+                                            <img src="CPU Board.jpg" alt="CPU Board" class="w-full h-auto rounded" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=CPU+Board'">
+                                            
+                                            <!-- Heatsink Callout -->
+                                            <div class="absolute group" style="top: 55%; left: 45%;">
+                                                <div class="bg-red-500 callout-ping"></div>
+                                                <div class="bg-red-600 callout-dot"></div>
+                                                <div class="callout-label border-red-200">Heatsink / Fan Area</div>
+                                            </div>
+                                            
+                                            <!-- Flash Card/Storage Callout (Corrected to left side) -->
+                                            <div class="absolute group" style="top: 60%; left: 20%;">
+                                                <div class="bg-purple-500 callout-ping"></div>
+                                                <div class="bg-purple-600 callout-dot"></div>
+                                                <div class="callout-label border-purple-200">Flash Card / Storage Area</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-blue-100/50 border-l-4 border-blue-500 p-4 rounded">
+                                        <div class="editable text-sm text-blue-900"><strong>Diagnostic Tip for CPU Overheating:</strong> Ask the machine operator or floor supervisor if they normally run an external box fan aimed into the open electrical cabinet. If they say yes, you immediately know heat/fan failure is a chronic issue. Install a proven working test CPU. If communication restores, offer the customer a new CPU to replace their broken/overheating unit.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Aldebaran -->
+                            <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-indigo-500">
+                                <h3 class="text-xl font-bold text-slate-900 mb-2">Aldebaran (Mill-Proxy / Q-Proxy) Protocol</h3>
+                                <p class="text-sm text-slate-500 mb-6 pb-4 border-b">Digital communications utilizing standard straight-through Ethernet cables.</p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="flex items-start">
+                                        <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Power Cycle & Reseat</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Power down machine and PC. Reseat standard Ethernet cable at the PC's network port and the Aldebaran machine control port.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Verify Static IPv4</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Verify the Windows PC's Network Adapter is holding its assigned Static IP address on the correct subnet. APIPA (169.254.x.x) means network layer failure.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Power Up & Ping Test</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Power up the machine and PC. Open Command Prompt and ping the machine's specific IP address. Success = physical/network layers intact.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Verify Proxy & Firewall</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Open <code>services.msc</code>. Verify <strong>Mill-Proxy</strong> or <strong>Q-Proxy</strong> is Running. Restart if hung. Check Windows Firewall is not blocking the executable.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TarsNC -->
+                            <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                                <h3 class="text-xl font-bold text-slate-900 mb-2">TarsNC (S-Proxy / Siemens) Protocol</h3>
+                                <p class="text-sm text-slate-500 mb-6 pb-4 border-b">Proprietary overlay communicating directly with Siemens Sinumerik 1 architecture.</p>
+                                
+                                <div class="space-y-6">
+                                    <div class="flex items-start">
+                                        <div class="bg-emerald-100 text-emerald-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Verify Connections & Correct Port <span class="text-red-500 font-bold ml-1 text-xs">(CRITICAL)</span></h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Power down and reseat straight-through cables. Ensure connection on Siemens NCU is in the correct port: Service port (<strong class="text-emerald-700">X127</strong>) or Plant network port (<strong class="text-emerald-700">X120</strong>). Wrong port is a major failure point.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-emerald-100 text-emerald-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Verify Static IPv4</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Verify PC NIC is set to the correct Static IP sharing the Siemens NCU subnet (e.g., 192.168.214.x).</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-emerald-100 text-emerald-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Ping the Siemens NCU</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Turn machine on. Ping Siemens NCU IP. Healthy network path responds in &lt; 5ms.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-emerald-100 text-emerald-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Verify S-Proxy & Advanced Firewall</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Open <code>services.msc</code>, verify <strong>S-Proxy</strong> is Running. If NCU pings but S-Proxy fails, check Windows Firewall allows S-Proxy traffic, Siemens S7 discovery (UDP), and ISO-on-TCP (TCP port 102).</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Phase 3 -->
+                    <section>
+                        <div class="bg-red-50 border-l-4 border-red-600 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                            <div class="flex items-center mb-4">
+                                <div class="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3 shrink-0">3</div>
+                                <h2 class="text-xl sm:text-2xl font-bold text-red-900">Phase 3: Escalation Policy</h2>
+                            </div>
+                            <div class="editable text-red-800 mb-6 font-medium text-sm sm:text-base">
+                                Do not escalate to Startup Managers or the Applications Manager until you have confirmed ALL of the following:
+                            </div>
+                            
+                            <div class="bg-white p-5 sm:p-6 rounded shadow-inner border border-red-200">
+                                <ul class="space-y-4 text-slate-800 text-sm sm:text-base list-none">
+                                    <li class="flex items-start">
+                                        <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                        <span class="editable font-medium">Tested the physical connection using a known-good external 100ft cable.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                        <span class="editable font-medium">Verified the correct cable type is used (Crossover for SPUD, Standard for Aldebaran/TarsNC).</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                        <span class="editable font-medium">Completed all controller-specific ping tests and proxy service configuration checks.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="editable mt-6 text-sm text-red-700 italic">
+                                If all the above have been completed and the machine still will not communicate, compile your findings (including IP configurations, ping results, and physical bypass results) and initiate escalation.
+                            </div>
+                        </div>
+                    </section>
+                    
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar Toggle Logic for Mobile
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                // Open
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                // slight delay to allow display block to apply before opacity fade
+                setTimeout(() => backdrop.classList.add('opacity-100'), 10);
+            } else {
+                // Close
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                setTimeout(() => backdrop.classList.add('hidden'), 300); // match transition duration
+            }
+        }
+
+        // Edit Mode Logic with LocalStorage Persistence
+        let isEditMode = false;
+        const editableElements = document.querySelectorAll('.editable');
+        const editToggleBtn = document.getElementById('editToggleBtn');
+        const editIcon = document.getElementById('editIcon');
+        const editText = document.getElementById('editText');
+
+        // Storage Key
+        const STORAGE_KEY = 'tarusSOP_contentEdits';
+
+        // Load saved content on boot
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDataString = localStorage.getItem(STORAGE_KEY);
+            if (savedDataString) {
+                try {
+                    const savedData = JSON.parse(savedDataString);
+                    // Match by index position (safe for static HTML)
+                    editableElements.forEach((el, index) => {
+                        if (savedData[index] !== undefined) {
+                            el.innerHTML = savedData[index];
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to parse saved SOP data.");
+                }
+            }
+        });
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            
+            if (isEditMode) {
+                // Enable Editing
+                document.body.classList.add('is-editing');
+                editableElements.forEach(el => {
+                    el.contentEditable = "true";
+                    el.setAttribute("spellcheck", "false");
+                });
+                
+                // Update Button UI
+                editToggleBtn.classList.remove('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
+                editToggleBtn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'border-blue-700');
+                editText.innerText = 'Save & Exit Edit';
+                // Switch to save icon
+                editIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>`;
+                editIcon.classList.remove('text-slate-500');
+                editIcon.classList.add('text-blue-100');
+                
+            } else {
+                // Disable Editing & Save
+                document.body.classList.remove('is-editing');
+                const newData = {};
+                
+                editableElements.forEach((el, index) => {
+                    el.contentEditable = "false";
+                    // Clean up potential formatting oddities introduced by user typing
+                    newData[index] = el.innerHTML;
+                });
+                
+                // Save to local storage
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+
+                // Update Button UI
+                editToggleBtn.classList.add('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
+                editToggleBtn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'border-blue-700');
+                editText.innerText = 'Enable Edit Mode';
+                // Switch back to pencil icon
+                editIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>`;
+                editIcon.classList.add('text-slate-500');
+                editIcon.classList.remove('text-blue-100');
+            }
+        }
+    </script>
+</body>
+</html>
