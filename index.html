@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarus Service - Mandatory Troubleshooting Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Image Callout Styles for CPU Board */
+        .callout-dot {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            border: 2px solid white;
+            position: absolute;
+            z-index: 10;
+        }
+        .callout-ping {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            position: absolute;
+            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .callout-label {
+            position: absolute;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            color: #1e293b;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        /* Edit Mode Styles */
+        .is-editing .editable {
+            outline: 2px dashed #3b82f6;
+            outline-offset: 2px;
+            border-radius: 4px;
+            background-color: rgba(239, 246, 255, 0.5);
+            cursor: text;
+            min-height: 1.5em;
+            transition: all 0.2s ease;
+        }
+        .is-editing .editable:hover {
+            background-color: rgba(219, 234, 254, 0.5);
+        }
+        .is-editing .editable:focus {
+            outline: 2px solid #2563eb;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased overflow-hidden">
+
+    <div class="flex h-screen w-full">
+        
+        <!-- Mobile Sidebar Backdrop -->
+        <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-900/60 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-slate-900 text-slate-300 z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:flex-shrink-0 transition-transform duration-300 ease-in-out flex flex-col shadow-xl">
+            <!-- Sidebar Header -->
+            <div class="h-16 flex items-center justify-between px-6 bg-slate-950 border-b border-slate-800">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-black tracking-tight text-red-500">TARUS <span class="text-white">SOP</span></h1>
+                </div>
+                <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Sidebar Links -->
+            <div class="flex-1 overflow-y-auto py-4 px-3 space-y-2">
+                
+                <!-- Home / Policy Menu -->
+                <div class="mb-4">
+                    <a href="#" id="link-home" onclick="switchView('home', 'Mandatory Troubleshooting Policy')" class="nav-link flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg group transition-colors">
+                        <svg class="nav-icon w-5 h-5 mr-3 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span class="font-bold text-sm tracking-wide uppercase">Department Policy</span>
+                    </a>
+                </div>
+
+                <!-- Spud Menu -->
+                <div>
+                    <button onclick="toggleNavGroup('spud')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-bold text-slate-200 uppercase tracking-wider hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                        <span>Spud</span>
+                        <svg id="icon-spud" class="nav-group-icon w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="group-spud" class="nav-group space-y-1 pl-3 ml-4 mt-1 border-l border-slate-700 hidden">
+                        <a href="#" id="link-spud-network" onclick="switchView('spud-network', 'SPUD Network Troubleshooting (PC-Mill)')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Network Settings (PC-Mill)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Aldebaran Menu -->
+                <div>
+                    <button onclick="toggleNavGroup('aldebaran')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-bold text-slate-200 uppercase tracking-wider hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                        <span>Aldebaran</span>
+                        <svg id="icon-aldebaran" class="nav-group-icon w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="group-aldebaran" class="nav-group space-y-1 pl-3 ml-4 mt-1 border-l border-slate-700 hidden">
+                        <a href="#" id="link-aldebaran-mill" onclick="switchView('aldebaran-mill', 'Aldebaran Network Troubleshooting (Mill-Proxy)')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Network Settings (Mill-Proxy)</span>
+                        </a>
+                        <a href="#" id="link-aldebaran-q" onclick="switchView('aldebaran-q', 'Aldebaran Network Troubleshooting (Q-Proxy)')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Network Settings (Q-Proxy)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- TarusNC Menu -->
+                <div>
+                    <button onclick="toggleNavGroup('tarusnc')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-bold text-slate-200 uppercase tracking-wider hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                        <span>TarusNC</span>
+                        <svg id="icon-tarusnc" class="nav-group-icon w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="group-tarusnc" class="nav-group space-y-1 pl-3 ml-4 mt-1 border-l border-slate-700 hidden">
+                        <a href="#" id="link-tarusnc-network" onclick="switchView('tarusnc-network', 'TarusNC Network Troubleshooting (S-Proxy)')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Network Settings (S-Proxy)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Siemens 840D Menu -->
+                <div>
+                    <button onclick="toggleNavGroup('siemens840')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-bold text-slate-200 uppercase tracking-wider hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                        <span>Siemens 840D</span>
+                        <svg id="icon-siemens840" class="nav-group-icon w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="group-siemens840" class="nav-group space-y-1 pl-3 ml-4 mt-1 border-l border-slate-700 hidden">
+                        <a href="#" id="link-sinumerik-reset" onclick="switchView('sinumerik-reset', 'SINUMERIK 840D: NC & PLC Reset')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">NC & PLC Reset</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Siemens Sinumerik 1 Menu -->
+                <div>
+                    <button onclick="toggleNavGroup('siemens1')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-bold text-slate-200 uppercase tracking-wider hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                        <span>Sinumerik 1</span>
+                        <svg id="icon-siemens1" class="nav-group-icon w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="group-siemens1" class="nav-group space-y-1 pl-3 ml-4 mt-1 border-l border-slate-700 hidden">
+                        <a href="#" id="link-archive" onclick="switchView('archive', 'Creating an Archive in Operate')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Create Operate Archive</span>
+                        </a>
+                        <a href="#" id="link-sinumerik1-feedback" onclick="switchView('sinumerik1-feedback', 'Switching Y/Z Axis to Motor Feedback')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Axis to Motor Feedback</span>
+                        </a>
+                        <a href="#" id="link-p105" onclick="switchView('p105', 'Deactivating Motors with Parameter P105')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Deactivate Motors (P105)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Components Menu -->
+                <div>
+                    <button onclick="toggleNavGroup('components')" class="w-full flex items-center justify-between px-3 py-2 text-sm font-bold text-slate-200 uppercase tracking-wider hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                        <span>Components & Misc</span>
+                        <svg id="icon-components" class="nav-group-icon w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="group-components" class="nav-group space-y-1 pl-3 ml-4 mt-1 border-l border-slate-700 hidden">
+                        <a href="#" id="link-battery" onclick="switchView('battery', 'Schneeberger Encoder Battery Replacement')" class="nav-link flex items-center px-3 py-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg group transition-colors">
+                            <span class="font-medium text-sm">Schneeberger Battery</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User/Profile bottom section -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-red-900 border border-red-500 flex items-center justify-center text-sm font-bold text-red-200">
+                        SD
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-slate-200">Service Dept</p>
+                        <p class="text-xs text-red-400 font-medium">Mandatory Troubleshooting</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50">
+            
+            <!-- Top Header (Sticky) -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-30 shrink-0 shadow-sm">
+                <div class="flex items-center">
+                    <button onclick="toggleSidebar()" class="lg:hidden mr-4 text-slate-500 hover:text-slate-700 focus:outline-none p-1 rounded-md hover:bg-slate-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <h2 id="header-title" class="text-lg font-bold text-slate-800">Mandatory Troubleshooting Policy</h2>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button id="editToggleBtn" onclick="toggleEditMode()" class="flex items-center px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-md border border-slate-300 transition-colors shadow-sm">
+                        <svg id="editIcon" class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        <span id="editText">Enable Edit Mode</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content Area -->
+            <div id="sopContentArea" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 w-full pb-32">
+                
+                <!-- HOME / POLICY VIEW -->
+                <div id="view-home" class="sop-view block">
+                    <div class="max-w-4xl mx-auto mt-8">
+                        <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-lg border border-red-100 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-red-100 rounded-full opacity-50 blur-2xl"></div>
+                            <div class="flex items-center mb-6 relative z-10">
+                                <div class="bg-red-100 p-3 rounded-full mr-4 border border-red-200">
+                                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                </div>
+                                <h1 class="text-3xl font-black text-slate-900 tracking-tight">ATTENTION SERVICE TECHNICIANS</h1>
+                            </div>
+                            
+                            <h2 class="text-xl font-bold text-red-700 mb-6 relative z-10 border-b border-slate-200 pb-4">Mandatory Troubleshooting Escalation Policy</h2>
+                            
+                            <div class="space-y-6 relative z-10 text-slate-700 leading-relaxed text-lg">
+                                <p class="editable font-medium">
+                                    Before escalating ANY issue or calling the Applications Manager, the Startup Manager, or other departments for support, you <strong>MUST</strong> complete the foundational troubleshooting steps outlined in this guide.
+                                </p>
+                                
+                                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 shadow-inner">
+                                    <h3 class="font-bold text-slate-900 mb-3">Why this guide exists:</h3>
+                                    <p class="editable text-base">
+                                        This protocol is strictly enforced because basic foundational checks (like bypassing internal network cables, verifying proxy IPs, or checking motor parameters) are consistently being skipped. Failing to perform these initial diagnostic checks leads to unnecessary machine downtime and misdirected support calls that pull other departments away from their primary responsibilities.
+                                    </p>
+                                </div>
+
+                                <h3 class="font-bold text-slate-900 mt-8 mb-4">Your Responsibilities:</h3>
+                                <ul class="space-y-3">
+                                    <li class="flex items-start">
+                                        <svg class="w-6 h-6 text-red-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span class="editable"><strong>Navigate using the left-hand menu</strong> to locate the specific controller (Spud, Aldebaran, TarusNC, Siemens) you are servicing.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-6 h-6 text-red-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span class="editable"><strong>Perform every step exactly as written</strong>, in the correct sequence. Do not skip physical bypass checks.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-6 h-6 text-red-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span class="editable"><strong>Document your findings.</strong> If you must escalate a call, you will be asked for the results of the specific ping tests, physical bypasses, and parameter checks detailed in this dashboard.</span>
+                                    </li>
+                                </ul>
+
+                                <div class="mt-8 bg-red-600 text-white p-4 rounded-lg text-center font-bold shadow-md">
+                                    <p class="editable">Calls requesting support for issues explicitly covered in this guide will be immediately redirected back to this dashboard.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPUD VIEW -->
+                <div id="view-spud-network" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+
+                        <!-- Spud Required Toolkit -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 01-1-1V4a1 1 0 011-1h3a1 1 0 001-1v-1z"></path></svg>
+                                Required Technician Toolkit
+                            </h3>
+                            <ul class="space-y-3 text-sm text-slate-700 mb-6">
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>Network Cable Tester Kit</strong> (to verify continuity and pinouts on both ends of a cable).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>100ft Crossover Ethernet Cable</strong> (SPUD specific).</span>
+                                </li>
+                            </ul>
+                            <img src="Tester.jpg" alt="Network Cable Tester" class="w-full max-w-[200px] rounded shadow border border-slate-200" onerror="this.src='https://placehold.co/300x400/e2e8f0/475569?text=Tester+Kit'">
+                        </div>
+
+                        <!-- SPUD External Bypass -->
+                        <section>
+                            <div class="bg-amber-50 border-l-4 border-amber-500 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                                <h2 class="text-xl sm:text-2xl font-bold text-amber-900 mb-4">Foundational Check: External Cable Bypass</h2>
+                                <div class="editable text-amber-800 mb-6 font-medium text-sm sm:text-base">
+                                    The absolute fastest way to isolate a SPUD communication failure is to bypass the machine's internal routing. Connect your proven <strong>100ft external crossover cable</strong> directly from the network port on the desktop PC to the machine control port. If it works, the issue is an internal cable failure. If it fails, proceed to the protocol below.
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- SPUD Section Protocol -->
+                        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-blue-600">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">SPUD / PC-Mill Protocol</h3>
+                            <p class="text-sm text-slate-500 mb-6 pb-4 border-b">Follow these steps in exact order when responding to a SPUD communication error.</p>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                                <div class="order-2 lg:order-1">
+                                    <div class="bg-slate-50 p-4 rounded border border-slate-200 mb-4">
+                                        <p class="editable text-sm text-slate-700"><strong>Crucial Network Note:</strong> SPUD controllers require a crossover cable. A crossover requires pins 1 & 2 to cross with 3 & 6 (Green and Orange pairs swapped).</p>
+                                    </div>
+                                    <img src="cross-connect.jpg" alt="T568A and T568B Pinouts" class="w-full rounded shadow border border-slate-200" onerror="this.src='https://placehold.co/600x400/e2e8f0/475569?text=Crossover+Pinout+Diagram'">
+                                </div>
+                                
+                                <div class="space-y-4 order-1 lg:order-2">
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Power Down and Reseat Physical Connections</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Power down the machine entirely. Reseat the crossover network cable at the computer network port and at the machine control port. Ensure you are grounded, then remove and carefully re-seat the Flash card into the Mill PC (CPU board).</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Assign IP Settings in Control Panel</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">The tech must assign the port and IP settings manually. Open Windows Control Panel -> Network and Sharing Center -> Ethernet Properties. Select Internet Protocol Version 4 (TCP/IPv4) and verify the static IP is assigned correctly. APIPA (169.254.x.x) means failure.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Power Up and Ping Test</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Turn the machine on. Open Command Prompt and attempt to ping the machine's communication IP address: <code class="bg-slate-200 px-1 rounded text-red-600">ping 192.0.0.47</code>. If successful, communication is restored. If it fails, proceed.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Verify Windows HOSTS File (Admin)</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Navigate to <code class="text-xs bg-slate-200 px-1">C:\Windows\System32\drivers\etc</code>. Open Notepad as Admin, then open `hosts`. Verify the exact line: <code class="font-bold">192.0.0.46 PC MILL</code>. Correct if missing or has a # in front.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-800 mb-2 flex items-center">
+                                    <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-2 shrink-0 text-xs">5</div>
+                                    CPU Board Environmental & Hardware Check
+                                </h4>
+                                <div class="editable text-sm text-slate-700 mb-6">Unplug the flash card and re-seat it into the CPU board one more time, then test. If it still fails, inspect the cooling fan on the CPU board. In hot environments, these fans fail, causing the board to overheat and drop communication.</div>
+                                
+                                <div class="flex flex-col items-center mb-6">
+                                    <div class="relative inline-block w-full max-w-2xl bg-white rounded-lg p-2 border border-slate-200 shadow-sm">
+                                        <img src="CPU Board.jpg" alt="CPU Board" class="w-full h-auto rounded" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=CPU+Board'">
+                                        <!-- Heatsink Callout -->
+                                        <div class="absolute group" style="top: 55%; left: 45%;">
+                                            <div class="bg-red-500 callout-ping"></div>
+                                            <div class="bg-red-600 callout-dot"></div>
+                                            <div class="callout-label border-red-200">Heatsink / Fan Area</div>
+                                        </div>
+                                        <!-- Flash Card/Storage Callout -->
+                                        <div class="absolute group" style="top: 40%; left: 10%;">
+                                            <div class="bg-purple-500 callout-ping"></div>
+                                            <div class="bg-purple-600 callout-dot"></div>
+                                            <div class="callout-label border-purple-200">Flash Card / Storage Area</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-blue-100/50 border-l-4 border-blue-500 p-4 rounded">
+                                    <div class="editable text-sm text-blue-900"><strong>Diagnostic Tip for CPU Overheating:</strong> Ask the operator if they normally run an external box fan aimed into the electrical cabinet. If yes, heat failure is likely. Test with a known good CPU. If successful, offer customer a replacement.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Escalation Policy -->
+                        <section>
+                            <div class="bg-red-50 border-l-4 border-red-600 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                                <h2 class="text-xl sm:text-2xl font-bold text-red-900 mb-4">Mandatory Escalation Policy</h2>
+                                <div class="editable text-red-800 mb-6 font-medium text-sm sm:text-base">
+                                    Do not escalate to Startup Managers or the Applications Manager until you have confirmed ALL of the following:
+                                </div>
+                                <div class="bg-white p-5 sm:p-6 rounded shadow-inner border border-red-200">
+                                    <ul class="space-y-4 text-slate-800 text-sm sm:text-base list-none">
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Tested the physical connection using a known-good external 100ft cable.</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Verified the correct cable type is used (Crossover for SPUD).</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Completed all controller-specific ping tests and PC-Mill configuration checks.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
+                <!-- ALDEBARAN MILL-PROXY VIEW -->
+                <div id="view-aldebaran-mill" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+
+                        <!-- Aldebaran Required Toolkit -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 01-1-1V4a1 1 0 011-1h3a1 1 0 001-1v-1z"></path></svg>
+                                Required Technician Toolkit
+                            </h3>
+                            <ul class="space-y-3 text-sm text-slate-700 mb-6">
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>Network Cable Tester Kit</strong> (to verify continuity and pinouts on both ends of a cable).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>100ft Standard Ethernet Cable</strong> (Cat5e/Cat6).</span>
+                                </li>
+                            </ul>
+                            <img src="Tester.jpg" alt="Network Cable Tester" class="w-full max-w-[200px] rounded shadow border border-slate-200" onerror="this.src='https://placehold.co/300x400/e2e8f0/475569?text=Tester+Kit'">
+                        </div>
+
+                        <!-- Aldebaran External Bypass -->
+                        <section>
+                            <div class="bg-amber-50 border-l-4 border-amber-500 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                                <h2 class="text-xl sm:text-2xl font-bold text-amber-900 mb-4">Foundational Check: External Cable Bypass</h2>
+                                <div class="editable text-amber-800 mb-6 font-medium text-sm sm:text-base">
+                                    The absolute fastest way to isolate an Aldebaran communication failure is to bypass the machine's internal routing. Connect your proven <strong>100ft standard straight-thru network cable</strong> directly from the network port on the desktop PC to the machine control port. If communication is restored, the issue is an internal cable failure.
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Aldebaran Architecture Info Box -->
+                        <div class="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-md text-white border border-slate-700">
+                            <h3 class="text-xl font-bold mb-2 flex items-center">
+                                <svg class="w-6 h-6 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                                Aldebaran Architecture: User vs. Mill Computers
+                            </h3>
+                            <p class="editable text-sm text-slate-300 mb-6 pb-4 border-b border-slate-700">Understanding the dual-PC architecture is critical before troubleshooting.</p>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-bold text-indigo-300 mb-2">User Computer (Windows PC)</h4>
+                                    <div class="editable text-sm text-slate-300 space-y-2 mb-4">
+                                        <p>This is a Windows-based PC that runs the Aldebaran UI. <strong>Dual NICs are strictly required</strong> (1 integrated into mother board & 1 external network card). One communicates with the facility network, the other exclusively to the Mill.</p>
+                                        <ul class="list-disc pl-5 mt-2 space-y-1 text-xs text-slate-400">
+                                            <li>CPU: Intel i5 2.8 GHz or greater</li>
+                                            <li>OS: Windows 7 64-bit Professional</li>
+                                            <li>RAM: 8GB Dual Channel or greater</li>
+                                            <li>Motherboard: Intel P67 B3</li>
+                                            <li>Power Supply: Ultra-LSP 550 (500 Watt)</li>
+                                            <li>Video Card: NVIDIA GTS250</li>
+                                            <li>Hard Drive: Western Digital 5002AALX 500GB SATA 7200rpm</li>
+                                            <li>DVD Burner: Asus DRW-24B1ST</li>
+                                        </ul>
+                                    </div>
+                                    <div class="bg-amber-500/20 border-l-4 border-amber-500 p-3 rounded mb-6">
+                                        <p class="editable text-xs text-amber-200 font-medium">⚠️ Since this PC is used strictly for the machine control interface, <strong>Tarus does not recommend ANY other external software applications be used on it.</strong></p>
+                                    </div>
+                                    
+                                    <h4 class="font-bold text-indigo-300 mb-2">Mill Computer (Embedded)</h4>
+                                    <div class="editable text-sm text-slate-300">
+                                        <p>This is an embedded computer running a Real Time Operating System (RTOS) that provides low-level, fast control of machine movements and I/O functions. Constant interaction between the Mill computer and the User computer is maintained via a Proxy service appearing in the Windows System Tray.</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <img src="screencapture-taruswiki-doku-php-2026-08-03-10_41_14.jpg" alt="Tarus Wiki Architecture Reference" class="w-full rounded shadow-lg border border-slate-600" onerror="this.src='https://placehold.co/800x600/1e293b/94a3b8?text=Aldebaran+Wiki+Reference'">
+                                    <img src="screencapture-taruswiki-doku-php-2026-08-03-10_39_41.jpg" alt="Tarus Wiki Architecture 2" class="w-full rounded shadow-lg border border-slate-600" onerror="this.src='https://placehold.co/800x600/1e293b/94a3b8?text=Aldebaran+Wiki+Reference+2'">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mill Proxy (RMX) Protocol -->
+                        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-indigo-500">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">Aldebaran / Mill-Proxy Protocol (RMX)</h3>
+                            <p class="text-sm text-slate-500 mb-6 pb-4 border-b">Utilizes standard straight-through Ethernet cables for RMX systems.</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div class="flex items-start md:col-span-2">
+                                    <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Power Cycle, Reseat Cable, & Reseat Mill PC Flash Card</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">Power down the machine and PC. Reseat the standard straight-thru Ethernet cable at the PC's network port and the Aldebaran machine control port. <strong>Crucial:</strong> Locate the embedded Mill PC and carefully re-seat the Flash card inserted into it before powering back up.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Assign IP Settings in Control Panel</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">The tech must assign the port and IP settings manually. Open Windows Control Panel -> Network and Sharing Center -> Ethernet Properties. Select Internet Protocol Version 4 (TCP/IPv4). Set the IP address to <strong>192.0.0.47</strong> and Subnet mask to <strong>255.255.255.0</strong>.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Check Proxy Tray Icon & Services</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">Look for the proxy icon in the Windows system tray. Alternatively, open <code>services.msc</code> and verify <strong>Mill-Proxy</strong> is Running. Restart if hung.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start md:col-span-2">
+                                    <div class="bg-indigo-100 text-indigo-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Verify HOSTS File (Administrator Required)</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">
+                                            Open Start Menu > Accessories > Right-click <strong>Notepad</strong> > Run as Administrator. Browse to <code>C:\Windows\System32\drivers\etc</code> and open the `hosts` file. Ensure the following exact line exists: <code class="font-bold bg-slate-100 px-1">192.0.0.46 tpimill</code>. Save and exit.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <img src="ethernetproperties.jpg" alt="Mill Proxy Ethernet Properties" class="w-full rounded shadow-sm border border-slate-300" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=Ethernet+Properties'">
+                                <img src="ip4properties.jpg" alt="Mill Proxy IPv4 Properties" class="w-full rounded shadow-sm border border-slate-300" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=IPv4+Properties'">
+                            </div>
+                        </div>
+
+                        <!-- Escalation Policy -->
+                        <section>
+                            <div class="bg-red-50 border-l-4 border-red-600 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                                <h2 class="text-xl sm:text-2xl font-bold text-red-900 mb-4">Mandatory Escalation Policy</h2>
+                                <div class="editable text-red-800 mb-6 font-medium text-sm sm:text-base">
+                                    Do not escalate to Startup Managers or the Applications Manager until you have confirmed ALL of the following:
+                                </div>
+                                <div class="bg-white p-5 sm:p-6 rounded shadow-inner border border-red-200">
+                                    <ul class="space-y-4 text-slate-800 text-sm sm:text-base list-none">
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Tested the physical connection using a known-good external 100ft cable.</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Verified the correct cable type is used (Standard Patch Cable).</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Completed all controller-specific ping tests and Mill-Proxy configuration checks.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
+                <!-- ALDEBARAN Q-PROXY VIEW -->
+                <div id="view-aldebaran-q" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+
+                        <!-- Aldebaran Required Toolkit -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 01-1-1V4a1 1 0 011-1h3a1 1 0 001-1v-1z"></path></svg>
+                                Required Technician Toolkit
+                            </h3>
+                            <ul class="space-y-3 text-sm text-slate-700 mb-6">
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>Network Cable Tester Kit</strong> (to verify continuity and pinouts on both ends of a cable).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>100ft Standard Ethernet Cable</strong> (Cat5e/Cat6).</span>
+                                </li>
+                            </ul>
+                            <img src="Tester.jpg" alt="Network Cable Tester" class="w-full max-w-[200px] rounded shadow border border-slate-200" onerror="this.src='https://placehold.co/300x400/e2e8f0/475569?text=Tester+Kit'">
+                        </div>
+
+                        <!-- Aldebaran External Bypass -->
+                        <section>
+                            <div class="bg-amber-50 border-l-4 border-amber-500 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                                <h2 class="text-xl sm:text-2xl font-bold text-amber-900 mb-4">Foundational Check: External Cable Bypass</h2>
+                                <div class="editable text-amber-800 mb-6 font-medium text-sm sm:text-base">
+                                    The absolute fastest way to isolate an Aldebaran QNX communication failure is to bypass the machine's internal routing. Connect your proven <strong>100ft external standard network cable</strong> directly from the network port on the desktop PC to the machine control port.
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Q-Proxy (QNX) Protocol -->
+                        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-fuchsia-500">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">Aldebaran / Q-Proxy Protocol (QNX)</h3>
+                            <p class="text-sm text-slate-500 mb-6 pb-4 border-b">Utilizes standard straight-through Ethernet cables for digital QNX systems.</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div class="flex items-start md:col-span-2">
+                                    <div class="bg-fuchsia-100 text-fuchsia-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Power Cycle, Reseat Cable, & Reseat Mill PC Flash Card</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">Power down the machine and PC. Reseat the standard straight-thru Ethernet cable at the PC's network port and the Aldebaran machine control port. <strong>Crucial:</strong> Locate the embedded Mill PC and carefully re-seat the Flash card inserted into it before powering back up.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-fuchsia-100 text-fuchsia-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Assign IP Settings in Control Panel</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">The tech must assign the port and IP settings manually. Open Windows Control Panel -> Network and Sharing Center -> Ethernet Properties. Select Internet Protocol Version 4 (TCP/IPv4). Set the IP address to <strong>192.0.55.47</strong> and Subnet mask to <strong>255.255.255.0</strong>.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-fuchsia-100 text-fuchsia-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Check Proxy Tray Icon & Services</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">Look for the Qproxy icon in the Windows system tray. Alternatively, open <code>services.msc</code> and verify <strong>Q-Proxy</strong> is Running. Restart if hung.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start md:col-span-2">
+                                    <div class="bg-fuchsia-100 text-fuchsia-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Verify HOSTS File (Administrator Required)</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">
+                                            Open Start Menu > Accessories > Right-click <strong>Notepad</strong> > Run as Administrator. Browse to <code>C:\Windows\System32\drivers\etc</code> and open the `hosts` file. Ensure the following exact line exists: <code class="font-bold bg-slate-100 px-1">192.0.55.46 qnxmill</code>. Save and exit.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <img src="Q Proxy ethernetproperties.jpg" alt="Q Proxy Ethernet Properties" class="w-full rounded shadow-sm border border-slate-300" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=Q-Proxy+Ethernet'">
+                                <img src="Q Proxy ip4properties.jpg" alt="Q Proxy IPv4 Properties" class="w-full rounded shadow-sm border border-slate-300" onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=Q-Proxy+IPv4'">
+                            </div>
+                        </div>
+
+                        <!-- Escalation Policy -->
+                        <section>
+                            <div class="bg-red-50 border-l-4 border-red-600 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                                <h2 class="text-xl sm:text-2xl font-bold text-red-900 mb-4">Mandatory Escalation Policy</h2>
+                                <div class="editable text-red-800 mb-6 font-medium text-sm sm:text-base">
+                                    Do not escalate to Startup Managers or the Applications Manager until you have confirmed ALL of the following:
+                                </div>
+                                <div class="bg-white p-5 sm:p-6 rounded shadow-inner border border-red-200">
+                                    <ul class="space-y-4 text-slate-800 text-sm sm:text-base list-none">
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Tested the physical connection using a known-good external 100ft cable.</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Verified the correct cable type is used (Standard Patch Cable).</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Completed all controller-specific ping tests and Q-Proxy configuration checks.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
+                <!-- TARUSNC VIEW -->
+                <div id="view-tarusnc-network" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+                        
+                        <!-- TarusNC Required Toolkit -->
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 01-1-1V4a1 1 0 011-1h3a1 1 0 001-1v-1z"></path></svg>
+                                Required Technician Toolkit
+                            </h3>
+                            <ul class="space-y-3 text-sm text-slate-700 mb-6">
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>Network Cable Tester Kit</strong> (to verify continuity and pinouts on both ends of a cable).</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-blue-500 mr-2 font-bold mt-0.5">•</span>
+                                    <span class="editable"><strong>100ft Standard Ethernet Cable</strong> (Cat5e/Cat6).</span>
+                                </li>
+                            </ul>
+                            <img src="Tester.jpg" alt="Network Cable Tester" class="w-full max-w-[200px] rounded shadow border border-slate-200" onerror="this.src='https://placehold.co/300x400/e2e8f0/475569?text=Tester+Kit'">
+                        </div>
+
+                        <!-- TarusNC External Bypass -->
+                        <section>
+                            <div class="bg-amber-50 border-l-4 border-amber-500 p-6 sm:p-8 rounded-r-xl shadow-sm mb-6">
+                                <h2 class="text-xl sm:text-2xl font-bold text-amber-900 mb-4">Foundational Check: External Cable Bypass</h2>
+                                <div class="editable text-amber-800 font-medium text-sm sm:text-base">
+                                    The absolute fastest way to isolate a TarusNC communication failure is to bypass the machine's internal routing. Connect your proven <strong>100ft external standard network cable</strong> directly from the network port on the desktop PC to the machine control port.
+                                </div>
+                            </div>
+                        </section>
+
+                        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-emerald-500">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">TarusNC / S-Proxy Protocol</h3>
+                            <p class="text-sm text-slate-500 mb-4">Proprietary overlay communicating directly with Siemens Sinumerik 1 architecture.</p>
+                            
+                            <div class="bg-emerald-50 text-emerald-800 p-4 rounded border border-emerald-200 text-sm font-medium mb-8 shadow-inner">
+                                <strong class="block mb-1 text-emerald-900">Important Note: TarusNC does not use the Windows HOSTS file.</strong>
+                                <span class="editable">Communication relies entirely on physical port matching, Windows IPv4 configuration, and Siemens Communication Settings. Do not attempt to modify HOSTS files for S-Proxy issues.</span>
+                            </div>
+                            
+                            <div class="space-y-10">
+                                <!-- Step 1 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">1</span>
+                                            Verify Physical Port Initialization
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            Trace the straight-thru network cable going directly from the Column PC to the NCU plugged into the board inside the cabinet. Ensure connection on Siemens NCU is in the correct port: Service port (<strong class="text-emerald-700">X127</strong>) or Plant network port (<strong class="text-emerald-700">X120</strong>).<br><br>
+                                            Next, open <code>Control Panel\Network and Internet\Network Connections</code>. Unplug the network cable from the PC and plug it back in. <strong>Watch the screen</strong> to make sure the specific network adapter named <strong>Machine Control</strong> initializes. Because these PCs have multiple network ports, this ensures you are plugged into the correctly configured port.
+                                        </div>
+                                    </div>
+                                    <img src="Network Machine Control 2.JPG" alt="Network Connections Initialization" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x400/e2e8f0/475569?text=Network+Connections'">
+                                </div>
+
+                                <!-- Step 2 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">2</span>
+                                            Verify Machine Control IP Address
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            Right-click the initialized <strong>Machine Control</strong> adapter and select Properties. Select <strong>Internet Protocol Version 4 (TCP/IPv4)</strong> and click Properties.<br><br>
+                                            Verify the IP address is configured exactly as <strong>192.168.214.55</strong> with a subnet mask of <strong>255.255.255.0</strong>. If this does not currently match, this is a major problem and must be corrected to establish communication.
+                                        </div>
+                                    </div>
+                                    <img src="Network Machine Control 1.JPG" alt="Machine Control IP Settings" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x400/e2e8f0/475569?text=IPv4+Settings'">
+                                </div>
+
+                                <!-- Step 3 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">3</span>
+                                            Siemens Communication Settings
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            Run <code>SINUMERIK_OPERATE_pc.exe</code> as Administrator (Select Standard ONE NCU and Complete setup).<br><br>
+                                            Open the Windows Control Panel (set <em>View by</em> to Small icons). Launch <strong>Communication Settings</strong>. Once open, select <strong>Access points</strong> on the left. Expand <strong>S7ONLINE</strong> and verify it is assigned to the Machine Control adapter (e.g., <code>Intel(R) Ethernet Controller I226-V. TCPIP.AUTO. 1</code>).
+                                        </div>
+                                    </div>
+                                    <img src="S-Proxy 1.JPG" alt="Siemens Communication Settings" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=S-Proxy+Settings'">
+                                </div>
+
+                                <!-- Steps 4 & 5 -->
+                                <div class="bg-slate-50 p-6 rounded-lg border border-slate-200 space-y-6">
+                                    <div class="flex items-start">
+                                        <div class="bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0 mt-0.5">4</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Ping the Siemens NCU</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Turn the machine on. Open Command Prompt and ping the Siemens NCU IP address. A healthy network path will respond in &lt; 5ms.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0 mt-0.5">5</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Verify S-Proxy & Advanced Firewall</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Open <code>services.msc</code>, verify <strong>S-Proxy</strong> is Running. If the NCU pings successfully but S-Proxy fails, check that Windows Firewall is configured to allow S-Proxy traffic, Siemens S7 discovery (UDP), and ISO-on-TCP (TCP port 102).</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-blue-500 mt-8">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">Protocol 2: Windows Power & Adapter Optimization</h3>
+                            <p class="editable text-sm text-slate-500 mb-6 pb-4 border-b">Windows energy-saving features can inadvertently interrupt the continuous network "heartbeat" required by TarusNC. These settings must be disabled to ensure S-Proxy stability.</p>
+                            
+                            <div class="space-y-6">
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Set Power Plan to High Performance</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">Navigate to <code>Control Panel > All Control Panel Items > Power Options</code>. Select <strong>High Performance</strong>. This favors performance and prevents deep idle states.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Disable Sleep and Display Shutoff</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">Click <em>Change plan settings</em> next to High performance. Set <strong>Turn off the display</strong> to <code>Never</code> and <strong>Put the computer to sleep</strong> to <code>Never</code>.</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 text-blue-700 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Advanced Power Settings: Hard Disk</h4>
+                                        <div class="editable text-sm text-slate-600 mt-1">Click <em>Change advanced power settings</em>. Expand <strong>Hard disk</strong> > <strong>Turn off hard disk after</strong>. Change the Setting (Minutes) to <code>0</code> (Never). Click Apply.</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mt-4">
+                                    <div class="flex items-start mb-4">
+                                        <div class="bg-blue-600 text-white rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Disable Network Adapter Power Management</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">Open <code>Network Connections</code>. Right-click the <strong>Machine Control</strong> adapter > Properties > Configure. Go to the <strong>Power Management</strong> tab. <strong>UNCHECK</strong> <em>"Allow the computer to turn off this device to save power"</em> and <em>"Only allow a magic packet to wake the computer"</em>.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-600 text-white rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">5</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Disable Energy Efficient Ethernet (EEE)</h4>
+                                            <div class="editable text-sm text-slate-600 mt-1">In the same adapter configuration window, go to the <strong>Advanced</strong> tab. Scroll down the Property list to find <strong>Energy Efficient Ethernet</strong>. Change the Value to <code>Off</code>. Click OK and test S-Proxy stability.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border-t-4 border-teal-500 mt-8">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">Protocol 3: RF Interference & Wireless Mapping</h3>
+                            <p class="editable text-sm text-slate-500 mb-6 pb-4 border-b">If the physical cables, IPs, and Power Settings are correct, dropped communications may be caused by EMI noise (power cables routed with network lines) or heavy Wi-Fi traffic. If using wireless Hirschmann APs, map the network.</p>
+                            
+                            <div class="bg-teal-50 p-6 rounded-lg border border-teal-200">
+                                <h4 class="font-bold text-teal-900 mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+                                    Diagnostics Using the Ekahau Sidekick 2
+                                </h4>
+                                <div class="space-y-4">
+                                    <div class="flex items-start">
+                                        <div class="bg-teal-200 text-teal-800 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">1</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Connect & Launch</h4>
+                                            <div class="editable text-sm text-slate-700 mt-1">Power on the Ekahau Sidekick 2 device. Connect it directly to your diagnostic iPad or Laptop using the provided USB-C cable. Launch the Ekahau Analyzer app (Mobile) or Ekahau Pro software (Desktop). Sign in with your Tarus Ekahau credentials if prompted.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-teal-200 text-teal-800 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">2</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Read the Spectrum</h4>
+                                            <div class="editable text-sm text-slate-700 mt-1">Navigate to the Spectrum Analysis or Waterfall view. Filter the view to show only the <strong>5GHz band</strong>. Observe the color densities: Red/Orange peaks mean a channel is heavily utilized. Deep Blue/Black means the channel is empty and available.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-teal-200 text-teal-800 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">3</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Walk the Machine Footprint</h4>
+                                            <div class="editable text-sm text-slate-700 mt-1">Hold the Sidekick device and physically walk around the entire perimeter of where the TARUS machine is installed. Watch the analyzer for a channel (e.g. 149 or 153) that remains completely "quiet" (Blue/Black) across the entire footprint.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-teal-200 text-teal-800 rounded w-6 h-6 flex items-center justify-center font-bold mr-3 shrink-0 mt-0.5 text-xs">4</div>
+                                        <div>
+                                            <h4 class="font-semibold text-slate-800 text-sm">Select & Document</h4>
+                                            <div class="editable text-sm text-slate-700 mt-1">Identify the cleanest <strong>20MHz wide channel</strong> in the 5GHz spectrum. Write down this channel number to program into the Hirschmann LanConfig software to eliminate the wireless interference.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Escalation Policy -->
+                        <section>
+                            <div class="bg-red-50 border-l-4 border-red-600 p-6 sm:p-8 rounded-r-xl shadow-sm">
+                                <h2 class="text-xl sm:text-2xl font-bold text-red-900 mb-4">Mandatory Escalation Policy</h2>
+                                <div class="editable text-red-800 mb-6 font-medium text-sm sm:text-base">
+                                    Do not escalate to Startup Managers or the Applications Manager until you have confirmed ALL of the following:
+                                </div>
+                                <div class="bg-white p-5 sm:p-6 rounded shadow-inner border border-red-200">
+                                    <ul class="space-y-4 text-slate-800 text-sm sm:text-base list-none">
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Tested the physical connection using a known-good external 100ft cable.</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Verified the correct cable type is used (Standard Patch Cable).</span>
+                                        </li>
+                                        <li class="flex items-start">
+                                            <input type="checkbox" class="w-5 h-5 text-red-600 rounded mr-3 mt-0.5" disabled checked>
+                                            <span class="editable font-medium">Completed all controller-specific ping tests and S-Proxy configuration checks.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
+                <!-- SIEMENS 840D VIEW: Reset Procedure -->
+                <div id="view-sinumerik-reset" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+                        
+                        <!-- Safety Warning -->
+                        <div class="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm">
+                            <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                WARNING: SAFETY INFORMATION
+                            </h3>
+                            <ul class="list-disc pl-5 space-y-2 text-red-700 text-sm sm:text-base font-medium">
+                                <li class="editable">Ensure the machine is in a safe condition before beginning.</li>
+                                <li class="editable">After any reset or firmware installation, verify axis limits, reference positions, and machine safety functions before returning the machine to production.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Purpose & Equipment -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                                <h3 class="text-lg font-semibold text-blue-700 mb-2">Purpose</h3>
+                                <div class="editable text-slate-600 leading-relaxed text-sm sm:text-base">
+                                    This procedure provides technicians with the correct method for clearing the NC and PLC memory, restoring machine archives, and performing firmware recovery on a Siemens SINUMERIK 840D control. Following this procedure before attempting firmware recovery can prevent unnecessary software installations and reduce machine downtime.
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-6 rounded-xl shadow-sm border border-slate-200">
+                                <h3 class="text-lg font-semibold text-slate-800 mb-2">Required Equipment</h3>
+                                <ul class="list-disc pl-5 text-slate-700 text-sm mt-4 space-y-1.5">
+                                    <li class="editable font-medium">Engineering laptop</li>
+                                    <li class="editable font-medium">Siemens VNC Viewer</li>
+                                    <li class="editable font-medium">Siemens Boot Stick (correct firmware version)</li>
+                                    <li class="editable font-medium">Latest machine archive/backup</li>
+                                    <li class="editable font-medium">Ethernet connection to the NCU</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Procedure 1: NC & PLC Reset -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-6 pb-2 border-b">Procedure 1 – NC & PLC Reset</h3>
+                            
+                            <div class="space-y-10">
+                                <!-- Step 1 -->
+                                <div class="flex items-start">
+                                    <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-4 shrink-0">1</div>
+                                    <div class="w-full">
+                                        <h4 class="font-bold text-lg text-slate-800 mb-2">Verify Startup</h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base">Power on the machine. Observe the NC 7-segment LED display. During a normal startup sequence, the display should cycle through several values before stopping at: <strong class="bg-slate-100 px-2 py-1 rounded border border-slate-200 text-blue-700">6</strong></div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2 -->
+                                <div class="flex items-start">
+                                    <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-4 shrink-0">2</div>
+                                    <div class="w-full">
+                                        <h4 class="font-bold text-lg text-slate-800 mb-2">Set Initial Dial Positions</h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base mb-4">Set the rotary switches to the following positions, then reboot the control:</div>
+                                        <div class="overflow-x-auto border border-slate-200 rounded-lg max-w-sm">
+                                            <table class="w-full text-left text-sm text-slate-700">
+                                                <thead class="bg-slate-50 border-b border-slate-200">
+                                                    <tr>
+                                                        <th class="px-4 py-2 font-semibold">Device</th>
+                                                        <th class="px-4 py-2 font-semibold">Position</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">NC Dial</td>
+                                                        <td class="px-4 py-2 font-mono font-bold text-blue-700 editable">1</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">PLC Dial</td>
+                                                        <td class="px-4 py-2 font-mono font-bold text-blue-700 editable">3</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 3 -->
+                                <div class="flex items-start">
+                                    <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-4 shrink-0">3</div>
+                                    <div class="w-full">
+                                        <h4 class="font-bold text-lg text-slate-800 mb-2">Switch NC to Normal Mode</h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base mb-4">After the controller finishes booting, rotate the NC Dial from 1 to 0. Verify the following LED status:</div>
+                                        <div class="overflow-x-auto border border-slate-200 rounded-lg max-w-sm">
+                                            <table class="w-full text-left text-sm text-slate-700">
+                                                <thead class="bg-slate-50 border-b border-slate-200">
+                                                    <tr>
+                                                        <th class="px-4 py-2 font-semibold">Indicator</th>
+                                                        <th class="px-4 py-2 font-semibold">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">READY</td>
+                                                        <td class="px-4 py-2 editable"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-2"></span>Flashing Green</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">STOP</td>
+                                                        <td class="px-4 py-2 editable"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse mr-2"></span>Flashing Orange</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">SF</td>
+                                                        <td class="px-4 py-2 editable"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>Solid Red</span></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4 -->
+                                <div class="flex items-start">
+                                    <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-4 shrink-0">4</div>
+                                    <div class="w-full">
+                                        <h4 class="font-bold text-lg text-slate-800 mb-2">Clear the PLC</h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base">Starting with the PLC dial at 3, perform the following sequence: <br><br>
+                                            <strong class="text-blue-700 tracking-widest text-lg bg-slate-100 px-3 py-1 rounded border border-slate-200">3 → 2 → 3 → 2</strong>
+                                        <br><br>Leave the selector in Position 2.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 5 -->
+                                <div class="flex items-start">
+                                    <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-4 shrink-0">5</div>
+                                    <div class="w-full">
+                                        <h4 class="font-bold text-lg text-slate-800 mb-2">Verify PLC Reset</h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base mb-4">The controller should now display:</div>
+                                        <div class="overflow-x-auto border border-slate-200 rounded-lg max-w-sm">
+                                            <table class="w-full text-left text-sm text-slate-700">
+                                                <thead class="bg-slate-50 border-b border-slate-200">
+                                                    <tr>
+                                                        <th class="px-4 py-2 font-semibold">Indicator</th>
+                                                        <th class="px-4 py-2 font-semibold">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">READY</td>
+                                                        <td class="px-4 py-2 editable"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-2"></span>Flashing Green</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">STOP</td>
+                                                        <td class="px-4 py-2 editable"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-orange-500 mr-2"></span>Solid Orange</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">SF</td>
+                                                        <td class="px-4 py-2 editable text-slate-400">OFF</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">7-Segment Display</td>
+                                                        <td class="px-4 py-2 editable font-mono font-bold">6</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 6 -->
+                                <div class="flex items-start">
+                                    <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-4 shrink-0">6</div>
+                                    <div class="w-full">
+                                        <h4 class="font-bold text-lg text-slate-800 mb-2">Complete the Reset</h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base mb-4">Rotate the PLC Dial to 0. A successful reset is indicated by:</div>
+                                        <div class="overflow-x-auto border border-slate-200 rounded-lg max-w-sm mb-4">
+                                            <table class="w-full text-left text-sm text-slate-700">
+                                                <thead class="bg-slate-50 border-b border-slate-200">
+                                                    <tr>
+                                                        <th class="px-4 py-2 font-semibold">Indicator</th>
+                                                        <th class="px-4 py-2 font-semibold">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">READY</td>
+                                                        <td class="px-4 py-2 editable"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>Solid Green</span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="px-4 py-2 editable font-medium">RUN</td>
+                                                        <td class="px-4 py-2 editable"><span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>Solid Green</span></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="bg-green-50 text-green-800 p-3 rounded border border-green-200 text-sm font-medium editable">
+                                            At this point, both the NC and PLC have been successfully cleared.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Procedure 2: Restore Archive -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-4 pb-2 border-b">Procedure 2 – Restore the Machine Archive</h3>
+                            <div class="editable text-slate-600 text-sm sm:text-base mb-4">Once the reset is complete:</div>
+                            <ul class="list-decimal pl-5 space-y-2 text-slate-700 text-sm sm:text-base mb-6">
+                                <li class="editable">Load the latest machine archive.</li>
+                                <li class="editable">Restore all machine data.</li>
+                                <li class="editable">Verify that the archive loads without errors.</li>
+                                <li class="editable">Reference the machine if required.</li>
+                            </ul>
+                            
+                            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <strong class="text-slate-800 block mb-2 text-sm">Test and verify the following before returning the machine to service:</strong>
+                                <ul class="list-disc pl-5 space-y-1 text-slate-600 text-sm">
+                                    <li class="editable">Axis travel</li>
+                                    <li class="editable">Machine limits</li>
+                                    <li class="editable">Home positions</li>
+                                    <li class="editable">Machine functions</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <!-- Important Note -->
+                        <div class="bg-amber-50 p-6 rounded-xl border border-amber-200 shadow-sm">
+                            <h3 class="text-lg font-bold text-amber-900 mb-2 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Important Note
+                            </h3>
+                            <div class="editable text-amber-800 text-sm sm:text-base leading-relaxed">
+                                Always perform the NC/PLC Reset Procedure before attempting a firmware update. In many cases, the reset procedure restores normal operation without requiring firmware installation.
+                            </div>
+                        </div>
+
+                        <!-- Procedure 3: Firmware Recovery -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2 pb-2 border-b">Procedure 3 – Firmware Recovery</h3>
+                            <div class="editable text-red-600 text-sm font-semibold mb-6">Only perform this procedure if the standard reset fails.</div>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm mb-1">Step 1 – Prepare the Control</h4>
+                                    <div class="editable text-slate-600 text-sm">Connect the engineering laptop to NCU. Insert the Siemens boot stick into the NCU USB port. The control should automatically enter Boot Mode. <em>(Note: No rotary switch changes should be required.)</em></div>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm mb-1">Step 2 – Open VNC Viewer</h4>
+                                    <div class="editable text-slate-600 text-sm">Launch Siemens VNC Viewer. After connecting, the screen may initially appear black. Select <strong>Refresh</strong> in the upper-left corner. The NCU service interface should appear.</div>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm mb-1">Step 3 – Modify NCU Settings</h4>
+                                    <div class="editable text-slate-600 text-sm">Select: <strong>Modify NCU Settings</strong>. Perform a Clear or Factory Reset on each of the following: Drives, HMI, PLC, NCU. Allow each process to be completed before proceeding.</div>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm mb-1">Step 4 – Update Firmware</h4>
+                                    <div class="editable text-slate-600 text-sm">Open: <strong>Update Firmware</strong>. Select: <strong>Install Firmware from Boot Stick</strong>. Choose: <strong>No Recovery</strong>. Allow the firmware installation to be completed without interruption. Do not remove power or disconnect the boot stick during the installation.</div>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm mb-1">Step 5 – Restore the Machine</h4>
+                                    <div class="editable text-slate-600 text-sm">After the firmware update: Repeat the NC & PLC Reset Procedure. Restore the latest machine archive. Reference the machine. Verify Drives, Axis motion, Limits, and PLC operation. Return the machine to production only after all verification checks have been successfully completed.</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Troubleshooting Table -->
+                        <section class="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-sm border border-slate-700 text-slate-200">
+                            <h3 class="text-xl font-bold text-white mb-6 pb-2 border-b border-slate-600 flex items-center">
+                                <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                Troubleshooting Guide
+                            </h3>
+                            <div class="overflow-x-auto rounded-lg border border-slate-600">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-900 text-slate-300">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold border-b border-slate-600">Condition</th>
+                                            <th class="px-4 py-3 font-semibold border-b border-slate-600">Possible Cause</th>
+                                            <th class="px-4 py-3 font-semibold border-b border-slate-600">Recommended Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-700 bg-slate-800">
+                                        <tr class="hover:bg-slate-750 transition-colors">
+                                            <td class="px-4 py-3 editable">Display does not reach "6"</td>
+                                            <td class="px-4 py-3 editable">Boot failure</td>
+                                            <td class="px-4 py-3 text-blue-300 font-medium editable">Perform firmware recovery</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-750 transition-colors bg-slate-800/50">
+                                            <td class="px-4 py-3 editable">SF LED remains ON</td>
+                                            <td class="px-4 py-3 editable">PLC not cleared</td>
+                                            <td class="px-4 py-3 text-blue-300 font-medium editable">Repeat PLC reset sequence</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-750 transition-colors">
+                                            <td class="px-4 py-3 editable">READY LED does not turn solid green</td>
+                                            <td class="px-4 py-3 editable">Reset incomplete</td>
+                                            <td class="px-4 py-3 text-blue-300 font-medium editable">Repeat NC/PLC reset</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-750 transition-colors bg-slate-800/50">
+                                            <td class="px-4 py-3 editable">Firmware update fails</td>
+                                            <td class="px-4 py-3 editable">Incorrect firmware or boot stick</td>
+                                            <td class="px-4 py-3 text-blue-300 font-medium editable">Verify firmware version and recreate boot stick</td>
+                                        </tr>
+                                        <tr class="hover:bg-slate-750 transition-colors">
+                                            <td class="px-4 py-3 editable">Archive will not restore</td>
+                                            <td class="px-4 py-3 editable">Corrupt or incompatible backup</td>
+                                            <td class="px-4 py-3 text-blue-300 font-medium editable">Restore a known good archive</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
+                <!-- ARCHIVE VIEW: Operate -->
+                <div id="view-archive" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+                        
+                        <!-- Purpose & Equipment -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                                <h3 class="text-lg font-semibold text-blue-700 mb-2">Purpose</h3>
+                                <div class="editable text-slate-600 leading-relaxed text-sm sm:text-base">
+                                    This procedure outlines the correct process for creating a machine archive in Operate. Archives should always be created before and after making changes to a machine. Maintaining these backups allows technicians to compare machine configurations, restore previous settings if necessary, and improve troubleshooting efficiency.
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 p-6 rounded-xl shadow-sm border border-slate-200">
+                                <h3 class="text-lg font-semibold text-slate-800 mb-2">Required Equipment</h3>
+                                <ul class="list-disc pl-5 text-slate-700 text-sm mt-4">
+                                    <li class="editable font-medium">Personal USB flash drive</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Procedure Steps -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-6 pb-2 border-b">Procedure</h3>
+                            
+                            <div class="space-y-12">
+                                <!-- Step 1 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">1</span>
+                                            Open the Main Menu
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            From the Operate screen, select the <strong>M icon</strong> located in the upper-right corner of the display.
+                                        </div>
+                                    </div>
+                                    <img src="Creating an Archive in Operate 1.jpg" alt="Operate Main Menu" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Main+Menu'">
+                                </div>
+
+                                <!-- Step 2 & 3 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">2</span>
+                                            Access the Setup Menu
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10 mb-6">
+                                            Select <strong>Setup</strong> from the Main Menu.
+                                        </div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">3</span>
+                                            Navigate to Page 2
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            Once in the Setup menu, navigate to <strong>Page 2</strong> using the expansion arrow.
+                                        </div>
+                                    </div>
+                                    <img src="Creating an Archive in Operate 2.jpg" alt="Setup Menu" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Setup+Menu'">
+                                </div>
+
+                                <!-- Step 4 & 5 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">4</span>
+                                            Open the Archive Utility
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10 mb-6">
+                                            Select <strong>Take an Archive</strong>. This option is located in the bottom-left corner of Page 2.
+                                        </div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">5</span>
+                                            Configure the Archive
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            When the Archive screen appears:<br><br>
+                                            • Verify and make sure that you click the option to <strong>Generate Archive and All Data of This Machine</strong>.<br><br>
+                                            • Verify that all available component checkboxes (NCK, PLC, Drives, etc.) are selected. Selecting all options ensures the archive contains the complete machine configuration, making future comparisons and restorations possible.
+                                        </div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <img src="Creating an Archive in Operate 3.jpg" alt="Generate Archive" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Generate+Archive'">
+                                        <img src="Creating an Archive in Operate 4.jpg" alt="Generate Archive Backup" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=All+Data+Backup'">
+                                        <img src="Creating an Archive in Operate 6.jpg" alt="Archive Options" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Component+Options'">
+                                    </div>
+                                </div>
+
+                                <!-- Step 6 -->
+                                <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                    <h4 class="font-bold text-lg text-slate-800 flex items-center mb-4">
+                                        <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">6</span>
+                                        Name the Archive
+                                    </h4>
+                                    <div class="editable text-slate-600 text-sm sm:text-base pl-10 mb-4">
+                                        Enter a descriptive archive name using a consistent naming convention. Using a consistent naming convention makes archives easier to locate and identify.
+                                    </div>
+                                    <div class="pl-10 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm">
+                                            <strong class="text-xs uppercase text-slate-500 block mb-1">Before Changes</strong>
+                                            <code class="text-blue-700 font-bold block mb-1">Customer_Machine_Before_Date</code>
+                                            <span class="text-xs text-slate-400 italic">Example: Ford_2021_Before_7-14-26</span>
+                                        </div>
+                                        <div class="bg-white p-4 rounded border border-slate-200 shadow-sm">
+                                            <strong class="text-xs uppercase text-slate-500 block mb-1">After Changes</strong>
+                                            <code class="text-emerald-700 font-bold block mb-1">Customer_Machine_After_Date</code>
+                                            <span class="text-xs text-slate-400 italic">Example: Ford_2021_After_7-14-26</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 7 & 8 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">7</span>
+                                            Select the Save Location
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10 mb-6">
+                                            Select your personal <strong>USB</strong> flash drive as the archive storage location.
+                                        </div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3">8</span>
+                                            Start the Archive
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            Verify the archive name and storage location. Select <strong>OK</strong> in the bottom-right corner of the screen to begin the archive process.
+                                        </div>
+                                    </div>
+                                    <img src="Creating an Archive in Operate 7.jpg" alt="Select Storage Path" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Storage+Path'">
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Important Notes & Behaviors -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-amber-50 p-6 rounded-xl border border-amber-200 shadow-sm">
+                                <h3 class="text-lg font-bold text-amber-900 mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    Archive Process Rules
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-3 text-amber-900 text-sm sm:text-base">
+                                    <li class="editable">Progress bars will begin filling until they reach 100%.</li>
+                                    <li class="editable font-bold text-red-700">Do not power off the machine.</li>
+                                    <li class="editable font-bold text-red-700">Do not remove the USB drive.</li>
+                                    <li class="editable font-bold text-red-700">Do not press Cancel.</li>
+                                    <li class="editable">Interrupting the archive process may result in an incomplete or unusable archive.</li>
+                                    <li class="editable">Remove the USB drive <strong>only after</strong> the confirmation message appears indicating the archive was completed without errors.</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-blue-50 p-6 rounded-xl border border-blue-200 shadow-sm">
+                                <h3 class="text-lg font-bold text-blue-900 mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Expected: PLC Sign of Life Errors
+                                </h3>
+                                <div class="editable text-blue-800 text-sm sm:text-base leading-relaxed">
+                                    While the archive is being created, the system may display <strong>"PLC Sign of Life"</strong> errors at the top of the screen.<br><br>
+                                    This behavior is expected. These messages occur because the system performs a PO Reset during the archive process and do not indicate a machine fault. Do not be alarmed.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Best Practice & Checklist -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-emerald-50 p-6 rounded-xl border border-emerald-200 shadow-sm">
+                                <h3 class="text-lg font-bold text-emerald-900 mb-3">Best Practice Standard</h3>
+                                <div class="editable text-emerald-800 font-medium mb-4 text-sm leading-relaxed border-b border-emerald-200 pb-4">
+                                    Always create both a BEFORE and an AFTER archive whenever machine changes are made. Maintaining both archives provides several benefits:
+                                </div>
+                                <ul class="list-disc pl-5 space-y-2 text-emerald-800 text-sm">
+                                    <li class="editable">Creates a complete backup before modifications are made.</li>
+                                    <li class="editable">Documents the machine configuration after repairs or programming changes.</li>
+                                    <li class="editable">Allows quick restoration if unexpected issues occur.</li>
+                                    <li class="editable">Simplifies troubleshooting by enabling side-by-side comparisons.</li>
+                                    <li class="editable">Supports consistent maintenance and service documentation.</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-sm text-slate-200">
+                                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Summary Checklist
+                                </h3>
+                                <div class="space-y-2.5 text-sm">
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Insert personal USB drive</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Open M Menu</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Navigate to Setup → Page 2</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Select Take an Archive</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Check all archive options</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Name the archive (standard naming convention)</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Select USB as the storage location</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Press OK</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Wait for all progress bars to reach 100%</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Verify the Archive Complete confirmation</span></label>
+                                    <label class="flex items-start space-x-3 cursor-pointer group"><input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-500 bg-slate-700 text-blue-500 focus:ring-blue-500"><span class="editable group-hover:text-white transition-colors">Repeat process after work completed</span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- FEEDBACK VIEW: Switching Y and Z Axes (Sinumerik 1) -->
+                <div id="view-sinumerik1-feedback" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+                        
+                        <!-- Safety Warning -->
+                        <div class="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm">
+                            <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                IMPORTANT SAFETY NOTES
+                            </h3>
+                            <ul class="list-disc pl-5 space-y-2 text-red-700 text-sm sm:text-base font-medium">
+                                <li class="editable">Follow all site safety procedures before jogging any axis.</li>
+                                <li class="editable">Use the correct variable address for the customer application before changing feedback mode.</li>
+                                <li class="editable">When changing Y-axis encoder topology, expect the system to perform a soft reset or NCK/PO reset. <strong class="underline">Do not interrupt the process.</strong></li>
+                                <li class="editable">After completing the work, return the machine to its original scale-feedback configuration when required.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Objective & Scope -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-lg font-semibold text-blue-700 mb-2">Purpose and Scope</h3>
+                            <div class="editable text-slate-600 leading-relaxed text-sm sm:text-base">
+                                This training guide explains how to place the Y and Z axes on motor feedback using the Operate interface. It also includes the additional steps required for the Y axis when the scale encoder must be removed from the drive and axis assignment topology.
+                            </div>
+                        </section>
+
+                        <!-- Basic Procedure (Steps 1-9) -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-6 pb-2 border-b">Procedure: Accessing NC/PLC Variables</h3>
+                            
+                            <div class="space-y-12">
+                                <!-- Step 1 & 2 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">1</span>
+                                            Locate Menu
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10 mb-6">
+                                            From the Operate screen, locate the <strong>M button</strong> in the upper-right corner.
+                                        </div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">2</span>
+                                            Open Menu Options
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            Press the M button to display the available menu options.
+                                        </div>
+                                    </div>
+                                    <img src="Switching Y and Z Axis 1.jpg" alt="M Button" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=M+Button'">
+                                </div>
+
+                                <!-- Step 3, 4, 5 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">3</span>
+                                            Select Diagnostics
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10 mb-6">
+                                            Select <strong>Diagnostics</strong> from the menu options.
+                                        </div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">4</span>
+                                            Open NC/PLC Variables
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10 mb-6">
+                                            In Diagnostics, go to page 1. At the bottom of the Operate screen, select <strong>NC/PLC Variables</strong>.
+                                        </div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-2">
+                                            <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">5</span>
+                                            Enter Variable Address
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base pl-10">
+                                            On the NC/PLC Variables screen, enter the appropriate variable address based on the customer application (see charts below).
+                                        </div>
+                                    </div>
+                                    <img src="Switching Y and Z Axis 2.jpg" alt="NC/PLC Variables" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=NC/PLC+Variables'">
+                                </div>
+
+                                <!-- Step 6 & 7 (Variable Charts) -->
+                                <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                    <h4 class="font-bold text-lg text-slate-800 mb-6 flex items-center">
+                                        <span class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">6 & 7</span>
+                                        Determine Correct Address
+                                    </h4>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pl-10">
+                                        <!-- Application 1 -->
+                                        <div>
+                                            <h5 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2">Ford XL, Gen3, Jumbo, & GM Gen3</h5>
+                                            <div class="overflow-hidden border border-slate-200 rounded-lg">
+                                                <table class="w-full text-left text-sm text-slate-700 bg-white">
+                                                    <thead class="bg-slate-100 border-b border-slate-200">
+                                                        <tr>
+                                                            <th class="px-3 py-2 font-semibold">Axis</th>
+                                                            <th class="px-3 py-2 font-semibold">Variable</th>
+                                                            <th class="px-3 py-2 font-semibold">Values</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-100">
+                                                        <tr>
+                                                            <td class="px-3 py-2 font-medium">Y Axis</td>
+                                                            <td class="px-3 py-2 font-mono font-bold text-blue-600">M2.2</td>
+                                                            <td class="px-3 py-2 text-xs">1 = Motor Feedback<br>0 = Scale Feedback</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="px-3 py-2 font-medium">Z Axis</td>
+                                                            <td class="px-3 py-2 font-mono font-bold text-blue-600">M2.3</td>
+                                                            <td class="px-3 py-2 text-xs">1 = Motor Feedback<br>0 = Scale Feedback</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Application 2 -->
+                                        <div>
+                                            <h5 class="font-bold text-indigo-800 mb-3 border-b border-indigo-200 pb-2">Stellantis Portable Applications</h5>
+                                            <div class="overflow-hidden border border-slate-200 rounded-lg">
+                                                <table class="w-full text-left text-sm text-slate-700 bg-white">
+                                                    <thead class="bg-slate-100 border-b border-slate-200">
+                                                        <tr>
+                                                            <th class="px-3 py-2 font-semibold">Axis</th>
+                                                            <th class="px-3 py-2 font-semibold">Variable</th>
+                                                            <th class="px-3 py-2 font-semibold">Values</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-100">
+                                                        <tr>
+                                                            <td class="px-3 py-2 font-medium">X Axis</td>
+                                                            <td class="px-3 py-2 font-mono font-bold text-indigo-600">M16.0</td>
+                                                            <td class="px-3 py-2 text-xs">1 = Motor Feedback<br>0 = Scale Feedback</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="px-3 py-2 font-medium">Y Axis</td>
+                                                            <td class="px-3 py-2 font-mono font-bold text-indigo-600">M16.1</td>
+                                                            <td class="px-3 py-2 text-xs">1 = Motor Feedback<br>0 = Scale Feedback</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="px-3 py-2 font-medium">Z Axis</td>
+                                                            <td class="px-3 py-2 font-mono font-bold text-indigo-600">M16.2</td>
+                                                            <td class="px-3 py-2 text-xs">1 = Motor Feedback<br>0 = Scale Feedback</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 8 & 9 -->
+                                <div class="pl-10 space-y-6">
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-1">
+                                            <span class="text-blue-600 mr-2 text-xl font-black">8.</span>
+                                            Enter Bit Address
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base">Enter the required bit address (e.g., <code class="bg-slate-100 px-1 rounded border border-slate-200 font-bold">M2.2</code>) into the variable field.</div>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-800 flex items-center mb-1">
+                                            <span class="text-blue-600 mr-2 text-xl font-black">9.</span>
+                                            Apply the Change
+                                        </h4>
+                                        <div class="editable text-slate-600 text-sm sm:text-base">Press <strong>Change</strong>, then change the value from <strong class="text-slate-800">0</strong> to <strong class="text-blue-700">1</strong> to switch the axis to motor feedback. The axis can then be jogged using motor feedback.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Additional Y-Axis Setup (Steps 10-23) -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-2">Additional Y-Axis Setup Steps</h3>
+                            <p class="text-slate-500 mb-6 pb-2 border-b text-sm">For the Y axis, the scale encoder must be formally removed from the topology.</p>
+                            
+                            <div class="space-y-10">
+                                <!-- Steps 10-12 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="space-y-6">
+                                        <div>
+                                            <h4 class="font-bold text-lg text-slate-800 flex items-center mb-1">
+                                                <span class="text-blue-600 mr-2 text-xl font-black">10.</span>
+                                                Return to Setup
+                                            </h4>
+                                            <div class="editable text-slate-600 text-sm sm:text-base">For the Y axis, additional steps are required. Return to the Setup screen before continuing.</div>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-lg text-slate-800 flex items-center mb-1">
+                                                <span class="text-blue-600 mr-2 text-xl font-black">11.</span>
+                                                Press M Button
+                                            </h4>
+                                            <div class="editable text-slate-600 text-sm sm:text-base">To return to Setup, press the <strong>M button</strong> in the upper-right corner again.</div>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-lg text-slate-800 flex items-center mb-1">
+                                                <span class="text-blue-600 mr-2 text-xl font-black">12.</span>
+                                                Select Setup
+                                            </h4>
+                                            <div class="editable text-slate-600 text-sm sm:text-base">After pressing the M button, select <strong>Setup</strong> from the options at the bottom of the screen.</div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <img src="Switching Y and Z Axis 3.jpg" alt="M Button" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=M+Button'">
+                                        <img src="Switching Y and Z Axis 4.jpg" alt="Setup Button" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Setup+Button'">
+                                    </div>
+                                </div>
+
+                                <!-- Remaining Text Steps -->
+                                <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                    <ul class="space-y-4 text-slate-700 text-sm sm:text-base">
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">13.</span> <span class="editable">Verify that you are on page 1 of the Setup screen.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">14.</span> <span class="editable">Select <strong>Drive System</strong>.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">15.</span> <span class="editable">Go to <strong>Drive Selection</strong>.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">16.</span> <span class="editable">Locate and select the Y-axis drive, then select <strong>Change</strong> from the options on the right side of the screen.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">17.</span> <span class="editable">When prompted, continue through the settings by selecting <strong>Next</strong> until the encoder information section appears.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">18.</span> <span class="editable bg-blue-100/50 p-1 rounded font-medium text-blue-900">In the encoder information section, remove the secondary encoder from the topology by setting all related options to <strong>None</strong>.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">19.</span> <span class="editable">Continue selecting Next until the setup is complete. The system may perform a soft reset during this process; allow it to finish. Errors may appear after completion.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">20.</span> <span class="editable">Next, go to <strong>Axis Assignment</strong>, select the Y axis, and remove the scale encoder by setting it to <strong>None</strong> so it is removed from the topology.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">21.</span> <span class="editable">When prompted, allow the required PO reset or NCK reset to complete.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">22.</span> <span class="editable">After the reset is complete, the Y axis can be jogged using motor feedback.</span></li>
+                                        <li class="flex items-start"><span class="font-bold text-blue-600 w-8 shrink-0">23.</span> <span class="editable italic text-slate-500">To return the machine to its original configuration, repeat the same steps in reverse and restore scale feedback as originally configured.</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
+                <!-- P105 VIEW: Deactivating Motors -->
+                <div id="view-p105" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+                        
+                        <!-- Safety Warning -->
+                        <div class="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm mb-6">
+                            <h3 class="text-lg font-bold text-red-800 mb-2 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                SAFETY WARNING
+                            </h3>
+                            <div class="editable text-red-700 text-sm sm:text-base font-medium">
+                                Deactivating motors disables the holding torque. Ensure the axis (especially vertical Z-axes) is physically blocked or safely resting before altering Parameter P105 to prevent crashing or drop.
+                            </div>
+                        </div>
+
+                        <!-- Objective -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-lg font-semibold text-blue-700 mb-2">Deactivating Motors Using Parameter P105</h3>
+                            <div class="editable text-slate-600 leading-relaxed mb-6 text-sm sm:text-base">
+                                Procedure for authorized employees to safely navigate to drive parameter P105 and deactivate the applicable motor.
+                            </div>
+                        </section>
+
+                        <!-- Procedure Steps -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-6 pb-2 border-b">Procedure</h3>
+                            
+                            <div class="space-y-12">
+                                <!-- Steps 1-4 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="space-y-6">
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">1</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Verify that the machine screen is displayed and that all axis values are visible.</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">2</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Navigate to the top right-hand corner of the Operate screen.</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">3</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Press the <strong>M button</strong> located in the top right-hand corner.</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">4</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">After pressing the M button, review the available options displayed in the drop-down menu.</div>
+                                        </div>
+                                    </div>
+                                    <img src="Deactivating Motors Using Parameter P105 1.jpg" alt="Press M Button" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=M+Button'">
+                                </div>
+
+                                <!-- Steps 5-6 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="space-y-6">
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">5</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Select the <strong>Setup</strong> icon.</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">6</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Confirm that the Setup screen opens.</div>
+                                        </div>
+                                    </div>
+                                    <img src="Deactivating Motors Using Parameter P105 2.jpg" alt="Setup Menu" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Setup+Menu'">
+                                </div>
+
+                                <!-- Step 7 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">7</div>
+                                        <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Remain on page one and select <strong>Machine Data</strong> from the bottom left-hand side of the screen.</div>
+                                    </div>
+                                    <img src="Deactivating Motors Using Parameter P105 3.jpg" alt="Machine Data" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Machine+Data'">
+                                </div>
+
+                                <!-- Step 8 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">8</div>
+                                        <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Select the <strong>Drive Parameter</strong> button.</div>
+                                    </div>
+                                    <img src="Deactivating Motors Using Parameter P105 4.jpg" alt="Drive Parameter" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=Drive+Parameter'">
+                                </div>
+
+                                <!-- Steps 9-12 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="space-y-6">
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">9</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">Navigate to the applicable axis. The axis name is displayed in the top corner. Use <strong>Drive +</strong> or <strong>Drive -</strong> to move through the available drives.</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">10</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">After selecting the applicable axis, select <strong>Search</strong> and enter <strong>P105</strong>.</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">11</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">When parameter P105 is displayed, double-click the parameter to open the drop-down menu.</div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">12</div>
+                                            <div class="editable text-slate-600 text-sm sm:text-base mt-0.5">In the drop-down menu, select the option to deactivate the applicable motor. This prevents the motor from receiving power and prevents the motor from running.</div>
+                                        </div>
+                                    </div>
+                                    <img src="Deactivating Motors Using Parameter P105 5.jpg" alt="P105 Parameter Selection" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x600/e2e8f0/475569?text=P105+Selection'">
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- BATTERY VIEW: Schneeberger Encoder -->
+                <div id="view-battery" class="sop-view hidden">
+                    <div class="max-w-5xl mx-auto space-y-10">
+                        
+                        <!-- Metadata Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <span class="text-xs uppercase font-bold text-slate-500 block mb-1">Document Type</span>
+                                <span class="editable text-sm text-slate-800 font-medium">Training / Standard Work Instruction</span>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                <span class="text-xs uppercase font-bold text-slate-500 block mb-1">Equipment</span>
+                                <span class="editable text-sm text-slate-800 font-medium">Schneeberger Encoder</span>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
+                                <span class="text-xs uppercase font-bold text-slate-500 block mb-1">Task</span>
+                                <span class="editable text-sm text-slate-800 font-medium">Encoder Battery Replacement</span>
+                            </div>
+                        </div>
+
+                        <!-- 1. Purpose & 3. Tools -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                                <h3 class="text-lg font-semibold text-blue-700 mb-3">1. Purpose</h3>
+                                <div class="editable text-slate-600 leading-relaxed text-sm sm:text-base">
+                                    This standard work instruction provides the required steps for identifying a Schneeberger encoder battery issue, replacing the encoder batteries, and documenting the service condition for training and maintenance reference.
+                                </div>
+                            </section>
+                            <section class="bg-slate-50 p-6 rounded-xl shadow-sm border border-slate-200">
+                                <h3 class="text-lg font-semibold text-slate-800 mb-3">3. Required Tools and Materials</h3>
+                                <ul class="space-y-2 text-slate-700 text-sm">
+                                    <li class="flex items-start"><span class="text-blue-500 mr-2 font-bold">•</span> <span class="editable">Replacement encoder battery</span></li>
+                                    <li class="flex items-start"><span class="text-blue-500 mr-2 font-bold">•</span> <span class="editable">Allen keys for rear cap screws & bird cage screws</span></li>
+                                    <li class="flex items-start"><span class="text-blue-500 mr-2 font-bold">•</span> <span class="editable">Digital multimeter capable of measuring DC voltage</span></li>
+                                    <li class="flex items-start"><span class="text-blue-500 mr-2 font-bold">•</span> <span class="editable">Marker or label for recording the replacement date</span></li>
+                                    <li class="flex items-start"><span class="text-blue-500 mr-2 font-bold">•</span> <span class="editable">Service issue notes or maintenance log</span></li>
+                                </ul>
+                            </section>
+                        </div>
+
+                        <!-- 2. Safety -->
+                        <section>
+                            <div class="bg-red-50 border-l-4 border-red-600 p-6 rounded-r-xl shadow-sm">
+                                <h3 class="text-lg font-bold text-red-800 mb-3 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    2. Safety and Important Requirements
+                                </h3>
+                                <ul class="list-disc pl-5 space-y-2 text-red-700 text-sm sm:text-base font-medium">
+                                    <li class="editable underline decoration-red-400 underline-offset-2">The machine must always remain powered on during the battery replacement process.</li>
+                                    <li class="editable">Use caution when removing covers and small fasteners to prevent damage or lost hardware.</li>
+                                    <li class="editable">Follow all site-specific safety, lockout, and maintenance procedures as required before beginning work.</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <!-- 4. Procedure -->
+                        <section class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-6 pb-2 border-b">4. Procedure</h3>
+                            
+                            <div class="space-y-10">
+                                <!-- Step 1 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">1</div>
+                                        <div>
+                                            <strong class="text-slate-800 block mb-1">Review the operator diagnostics screen.</strong>
+                                            <div class="editable text-slate-600 text-sm sm:text-base">Confirm the error displayed. The issue will most likely appear as an encoder error and may be shown on the Z or Y axis. Depending on the application, it may also appear on the X axis.</div>
+                                        </div>
+                                    </div>
+                                    <img src="Schneeberger Encoder Battery Replacement 1.jpg" alt="Alarms Screen" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/800x400/e2e8f0/475569?text=Alarms+Screen'">
+                                </div>
+
+                                <!-- Steps 2 & 3 -->
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                    <div class="space-y-6">
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">2</div>
+                                            <div>
+                                                <strong class="text-slate-800 block mb-1">Inspect the encoder indicator.</strong>
+                                                <div class="editable text-slate-600 text-sm sm:text-base">Remove the bird cage cover and check the light indicator on the Schneeberger encoder.</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">3</div>
+                                            <div>
+                                                <strong class="text-slate-800 block mb-1">Evaluate the light combination.</strong>
+                                                <div class="editable text-slate-600 text-sm sm:text-base">Review the indicator pattern displayed by the encoder and determine whether the battery requires replacement.</div>
+                                            </div>
+                                        </div>
+                                        <img src="Schneeberger Encoder Battery Replacement 2.jpg" alt="Battery Empty Light Code" class="w-full max-w-sm rounded border border-slate-300 shadow-sm mt-4" onerror="this.src='https://placehold.co/400x100/e2e8f0/475569?text=Green%2BRed+Flashes'">
+                                    </div>
+                                    <img src="Schneeberger Encoder Battery Replacement 3.jpg" alt="Troubleshooting Table" class="w-full rounded border border-slate-300 shadow-sm" onerror="this.src='https://placehold.co/600x800/e2e8f0/475569?text=Operating+State+Display'">
+                                </div>
+
+                                <!-- Steps 4, 5, 6 -->
+                                <div class="space-y-6 bg-slate-50 p-6 rounded-lg border border-slate-200">
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">4</div>
+                                        <div>
+                                            <strong class="text-slate-800 block mb-1">Access the encoder.</strong>
+                                            <div class="editable text-slate-600 text-sm sm:text-base">Locate the encoder in question and remove the rear cap. The rear cap is secured with four small Allen screws. Remove the cap carefully. <strong class="text-red-600">Important: The machine must always remain powered on during battery replacement.</strong></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">5</div>
+                                        <div>
+                                            <strong class="text-slate-800 block mb-1">Replace the batteries.</strong>
+                                            <div class="editable text-slate-600 text-sm sm:text-base">After the rear cap is removed, replace the batteries. Before installation, mark the replacement date on the new battery.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm mr-3 shrink-0">6</div>
+                                        <div>
+                                            <strong class="text-slate-800 block mb-1">Verify and document the old battery condition.</strong>
+                                            <div class="editable text-slate-600 text-sm sm:text-base">Check the voltage of the removed battery and record the DC voltage in the service issue notes.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-amber-100 text-amber-900 p-4 rounded border border-amber-300 text-sm font-medium">
+                                    <strong class="block mb-1">Note:</strong>
+                                    <span class="editable">If additional troubleshooting is required, review the encoder indicator status, confirm the axis associated with the alarm, and verify that the battery replacement was completed while the machine remained powered on.</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar Toggle Logic for Mobile
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                // Open
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => backdrop.classList.add('opacity-100'), 10);
+            } else {
+                // Close
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                setTimeout(() => backdrop.classList.add('hidden'), 300);
+            }
+        }
+
+        // Accordion Menu Logic
+        function toggleNavGroup(groupId) {
+            const groups = ['spud', 'aldebaran', 'tarusnc', 'siemens840', 'siemens1', 'components'];
+            
+            groups.forEach(id => {
+                const group = document.getElementById('group-' + id);
+                const icon = document.getElementById('icon-' + id);
+                if (!group || !icon) return;
+
+                if (id === groupId) {
+                    if (group.classList.contains('hidden')) {
+                        group.classList.remove('hidden');
+                        icon.classList.add('rotate-180');
+                    } else {
+                        group.classList.add('hidden');
+                        icon.classList.remove('rotate-180');
+                    }
+                } else {
+                    group.classList.add('hidden');
+                    icon.classList.remove('rotate-180');
+                }
+            });
+        }
+
+        // Edit Mode Logic with LocalStorage Persistence
+        let isEditMode = false;
+        
+        function getEditableElements() {
+            return document.querySelectorAll('.editable');
+        }
+
+        const editToggleBtn = document.getElementById('editToggleBtn');
+        const editIcon = document.getElementById('editIcon');
+        const editText = document.getElementById('editText');
+
+        const STORAGE_KEY = 'tarusSOP_contentEdits';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDataString = localStorage.getItem(STORAGE_KEY);
+            if (savedDataString) {
+                try {
+                    const savedData = JSON.parse(savedDataString);
+                    const elements = getEditableElements();
+                    elements.forEach((el, index) => {
+                        if (savedData[index] !== undefined) {
+                            el.innerHTML = savedData[index];
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to parse saved SOP data.");
+                }
+            }
+        });
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const elements = getEditableElements();
+            
+            if (isEditMode) {
+                document.body.classList.add('is-editing');
+                elements.forEach(el => {
+                    el.contentEditable = "true";
+                    el.setAttribute("spellcheck", "false");
+                });
+                
+                editToggleBtn.classList.remove('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
+                editToggleBtn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'border-blue-700');
+                editText.innerText = 'Save & Exit Edit';
+                editIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>`;
+                editIcon.classList.remove('text-slate-500');
+                editIcon.classList.add('text-blue-100');
+                
+            } else {
+                document.body.classList.remove('is-editing');
+                const newData = {};
+                
+                elements.forEach((el, index) => {
+                    el.contentEditable = "false";
+                    newData[index] = el.innerHTML;
+                });
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+
+                editToggleBtn.classList.add('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
+                editToggleBtn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'border-blue-700');
+                editText.innerText = 'Enable Edit Mode';
+                editIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>`;
+                editIcon.classList.add('text-slate-500');
+                editIcon.classList.remove('text-blue-100');
+            }
+        }
+
+        function switchView(viewId, title) {
+            document.getElementById('header-title').innerText = title;
+
+            document.querySelectorAll('.sop-view').forEach(el => {
+                el.classList.remove('block');
+                el.classList.add('hidden');
+            });
+            const targetView = document.getElementById('view-' + viewId);
+            if(targetView) {
+                targetView.classList.remove('hidden');
+                targetView.classList.add('block');
+            }
+
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('bg-slate-800', 'text-white');
+                el.classList.add('text-slate-400', 'hover:text-slate-100', 'hover:bg-slate-800');
+                
+                const icon = el.querySelector('.nav-icon');
+                if(icon) {
+                    icon.classList.remove('text-blue-200');
+                    icon.classList.add('text-slate-500', 'group-hover:text-slate-300');
+                }
+            });
+
+            const activeLink = document.getElementById('link-' + viewId);
+            if(activeLink) {
+                activeLink.classList.remove('text-slate-400', 'hover:text-slate-100');
+                activeLink.classList.add('bg-slate-800', 'text-white');
+                
+                const activeIcon = activeLink.querySelector('.nav-icon');
+                if(activeIcon) {
+                    activeIcon.classList.remove('text-slate-500', 'group-hover:text-slate-300');
+                    activeIcon.classList.add('text-blue-200');
+                }
+            }
+
+            if (window.innerWidth < 1024) {
+                const isClosed = sidebar.classList.contains('-translate-x-full');
+                if (!isClosed) {
+                    toggleSidebar();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
